@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace IVS_Lb_1
+namespace AIS
 {
     class AISRecognition
     {
