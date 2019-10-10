@@ -29,6 +29,19 @@ namespace IVS_Lb_1
         /// Число пикселей изображения, описываемого клеткой.
         /// </summary>
         public const int PixelCount = 12;
+
+        public virtual void ShowCell()
+        {
+            int xDemension = this.Pixels.GetLength(0);
+            int yDemension = this.Pixels.GetLength(1);
+            for (int i = 0; i < xDemension; i++)
+            {
+                for (int j = 0; j < yDemension; j++)
+                    Console.Write(Convert.ToInt32(this.Pixels[i, j]));
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+        }
     }
 
     public class MemoryCell : Antibody
@@ -45,6 +58,7 @@ namespace IVS_Lb_1
         public MemoryCell(Antibody ab, int? RecognizedNumber)
         {
             this.RecognizedNumber = RecognizedNumber;
+            this.Ag = ab.Ag;
             this.Affinnity = ab.Affinnity;
             this.Pixels = new bool[DemensionX, DemensionY];
             for (int i = 0; i < DemensionX; i++)
@@ -59,25 +73,17 @@ namespace IVS_Lb_1
         public double GetAffinnity(Antigen ag)
         {
             double aff = 0;
-            int h = 0; // расстояние Хемминга, можно использовать как меру близости антитела антигену.
-
-            // антитела и антигены должны описываться массивами одинакового размера.
-            if (DemensionX != ag.Pixels.GetLength(0) && DemensionY != ag.Pixels.GetLength(1))
-                throw new Exception();
-
-            // подсчет расстояния Хемминга.
-            for (int i = 0; i < DemensionX; i++)
-            {
-                for (int j = 0; j < DemensionY; j++)
-                {
-                    if (this.Pixels[i, j] != ag.Pixels[i, j])
-                        h++;
-                }
-            }
+            int h = HemMeasure(ag);
 
             // определение аффинности.
-            aff = (PixelCount - h) / PixelCount; // получили значение аффинности от 0 (если совпало ноль позиций) до 1 (если совпали все позиции)
+            aff = (double)(PixelCount - h) / PixelCount; // получили значение аффинности от 0 (если совпало ноль позиций) до 1 (если совпали все позиции)
             return aff;
+        }
+
+        public override void ShowCell()
+        {
+            Console.WriteLine("MemoryCell " + this.RecognizedNumber + ":");
+            base.ShowCell();
         }
     }
 
@@ -112,7 +118,24 @@ namespace IVS_Lb_1
             {
                 for (int j = 0; j < DemensionY; j++)
                 {
-                    this.Pixels[i, j] = rand.Next(2) == 0 ? false : true;
+                    this.Pixels[i, j] = rand.Next(0, 2) == 0 ? false : true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Конструктор, описывающий создание случайного антитела.
+        /// </summary>
+        public Antibody(int seed)
+        {
+            this.Pixels = new bool[DemensionX, DemensionY];
+
+            Random rand = new Random(seed);
+            for (int i = 0; i < DemensionX; i++)
+            {
+                for (int j = 0; j < DemensionY; j++)
+                {
+                    this.Pixels[i, j] = rand.Next(0, 2) == 0 ? false : true;
                 }
             }
         }
@@ -126,15 +149,6 @@ namespace IVS_Lb_1
             this.Pixels = (bool[,])ab.Pixels.Clone();
             this.Ag = ab.Ag;
             this.Affinnity = ab.Affinnity;
-
-            //this.Pixels = new bool[DemensionX, DemensionY];
-            //for (int i = 0; i < DemensionX; i++)
-            //{
-            //    for (int j = 0; j < DemensionY; j++)
-            //    {
-            //        this.Pixels[i, j] = ab.Pixels[i,j];
-            //    }
-            //}
         }
 
         /// <summary>
@@ -144,6 +158,19 @@ namespace IVS_Lb_1
         public void SetAffinnity(Antigen ag)
         {
             this.Ag = ag; // связали антитело с антигеном, с которым выполняется сравнение.
+            int h = HemMeasure(ag);
+
+            // определение аффинности.
+            this.Affinnity = (double)(PixelCount - h) / PixelCount; // получили значение аффинности от 0 (если совпало ноль позиций) до 1 (если совпали все позиции)
+        }
+
+        /// <summary>
+        /// Вычисление расстояния Хэмминга для булевых массивов, описывающих изображения. 
+        /// </summary>
+        /// <param name="ag">Антиген, описываемый булевым массивом.</param>
+        /// <returns>Число расхождений между данным антителом и заданным антигеном.</returns>
+        protected int HemMeasure(Antigen ag)
+        {
             int h = 0; // расстояние Хемминга, можно использовать как меру близости антитела антигену.
 
             // антитела и антигены должны описываться массивами одинакового размера.
@@ -160,11 +187,7 @@ namespace IVS_Lb_1
                 }
             }
 
-            // определение аффинности.
-            // _Affinnity = 1 / (double)(1 + h);
-            //this.Affinnity = h;
-            this.Affinnity = (PixelCount - h) / PixelCount; // получили значение аффинности от 0 (если совпало ноль позиций) до 1 (если совпали все позиции)
-            //return h;
+            return h;
         }
 
         /// <summary>
@@ -218,6 +241,12 @@ namespace IVS_Lb_1
             this.Pixels = (bool[,])array.Clone();
             //this.DemensionX = mas.GetLength(0);
             //this.DemensionY = mas.GetLength(1);
+        }
+
+        public override void ShowCell()
+        {
+            Console.WriteLine("Antigen " + this.RecognizedNumber + ":");
+            base.ShowCell();
         }
     }
 }

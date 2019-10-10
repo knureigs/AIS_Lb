@@ -8,26 +8,54 @@ namespace IVS_Lb_1
     class AISRecognition
     {
         /// <summary>
-        /// Популяция антител.
+        /// Популяция антител (без учета клеток памяти).
         /// </summary>
         Antibody[] Population;
+
+        /// <summary>
+        /// Размер популяции антител (без учета клеток памяти).
+        /// </summary>
+        public int PopulationAbSize { get; private set; }
+
+        /// <summary>
+        /// Размер популяции клеток памяти.
+        /// </summary>
+        public int PopulationMCellSize { get; private set; }
+
+        /// <summary>
+        /// Популяция клонов.
+        /// </summary>
         Antibody[] clonePopulation;
+
+        /// <summary>
+        /// Популяция клеток памяти.
+        /// </summary>
         MemoryCell[] memCells;
 
-
+        /// <summary>
+        /// Текущий номер поколения ИИС.
+        /// </summary>
         int genNumber = 0;
 
-        public AISRecognition(int populationSize, int memCellsPopulationSize)
+        public AISRecognition(int populationAbSize, int memCellsPopulationSize)
         {
-            // создали популяцию антител, случайных
-            this.Population = new Antibody[populationSize];
-            for (int i = 0; i < populationSize; i++)
+            this.PopulationAbSize = populationAbSize;
+            this.Population = new Antibody[populationAbSize];
+            for (int i = 0; i < populationAbSize; i++)
             {
-                this.Population[i] = new Antibody();
+                //this.Population[i] = new Antibody();
+                this.Population[i] = new Antibody(i);
             }
+
+            this.PopulationMCellSize = memCellsPopulationSize;
             memCells = new MemoryCell[memCellsPopulationSize];
         }
 
+        /// <summary>
+        /// Обучение ИИС.
+        /// </summary>
+        /// <param name="trainingSet">Обучающая выборка.</param>
+        /// <param name="accuracy">Требуемая точность, от 0 до 1.</param>
         public void Training(Antigen[] trainingSet, double accuracy)
         {
             int currentAgNumber = 0;
@@ -36,15 +64,14 @@ namespace IVS_Lb_1
                 while (true)
                 {
                     SetPopulationAffinity(trainingSet[currentAgNumber]);
-                    SortPopulation();
+                    Population = BubbleSort(Population);
 
                     CloneBest(4);
                     Mutation(30);
                     CloneReplace(trainingSet[currentAgNumber], currentAgNumber);
                     // Edit
 
-                    
-                    Console.WriteLine("Ag: " + currentAgNumber + " Generation: " + genNumber + " MaxAff: " + Population[0].Affinnity);
+                    Console.WriteLine("Ag: " + currentAgNumber + " Generation: " + genNumber + " MemCellAff: " + memCells[currentAgNumber].Affinnity.ToString("F2"));
                     if (memCells[currentAgNumber].Affinnity >= accuracy)
                     {
                         break;
@@ -54,8 +81,19 @@ namespace IVS_Lb_1
                 }
                 currentAgNumber++;
             }
+
+            // показать популяцию клеток памяти, сформированную в результате обучения
+            foreach (MemoryCell mc in memCells)
+            {
+                mc.ShowCell();
+            }
         }
 
+        /// <summary>
+        /// Оператор клонирования и замены.
+        /// </summary>
+        /// <param name="ag">Текущий антиген из обучающей выборки.</param>
+        /// <param name="currentAgNumber">Номер антигена из обучающей выборки.</param>
         private void CloneReplace(Antigen ag, int currentAgNumber)
         {
             for (int i = 0; i < clonePopulation.Count(); i++)
@@ -64,9 +102,24 @@ namespace IVS_Lb_1
             }
             clonePopulation = BubbleSort(clonePopulation);
             Antibody bestAb = clonePopulation[0].Affinnity > Population[0].Affinnity ? clonePopulation[0] : Population[0];
-            memCells[currentAgNumber] = new MemoryCell(bestAb, ag.RecognizedNumber);
+
+            if (memCells[currentAgNumber] != null)
+            {
+                if (bestAb.Affinnity > memCells[currentAgNumber].Affinnity)
+                {
+                    memCells[currentAgNumber] = new MemoryCell(bestAb, ag.RecognizedNumber);
+                }
+            }
+            else
+            {
+                memCells[currentAgNumber] = new MemoryCell(bestAb, ag.RecognizedNumber);
+            }
         }
 
+        /// <summary>
+        /// Оператор мутации.
+        /// </summary>
+        /// <param name="probability">Вероятность мутации, от 1 до 100.</param>
         private void Mutation(int probability)
         {
             for (int i = 0; i < clonePopulation.Count(); i++)
@@ -75,6 +128,10 @@ namespace IVS_Lb_1
             }
         }
 
+        /// <summary>
+        /// Клонирование антител с лучшей аффинностью.
+        /// </summary>
+        /// <param name="amount"></param>
         private void CloneBest(int amount)
         {
             List<Antibody> clones = new List<Antibody>();
@@ -89,17 +146,18 @@ namespace IVS_Lb_1
             }
             clonePopulation = clones.ToArray();
         }
-
-        private void SortPopulation()
-        {
-            Population = BubbleSort(Population);
-        }
+        
+        /// <summary>
+        /// Сортировка популяции антител методом пузырька.
+        /// </summary>
+        /// <param name="mas">Сортируемый набор антител.</param>
+        /// <returns>Отсортированный набор антител.</returns>
         private Antibody[] BubbleSort(Antibody[] mas)
         {
             Antibody temp;
             for (int i = 0; i < mas.Length - 1; i++)
             {
-                bool f = false;
+                bool f = false;// already sorted
                 for (int j = 0; j < mas.Length - i - 1; j++)
                 {
                     if (mas[j + 1].Affinnity > mas[j].Affinnity)
@@ -116,6 +174,10 @@ namespace IVS_Lb_1
             return mas;
         }
 
+        /// <summary>
+        /// Определение аффинностей всех антител в популяции.
+        /// </summary>
+        /// <param name="antigen">Антиген, аффинность которого вычисляется.</param>
         private void SetPopulationAffinity(Antigen antigen)
         {
             for (int i = 0; i < Population.Length; i++)
@@ -123,12 +185,17 @@ namespace IVS_Lb_1
                 Population[i].SetAffinnity(antigen);
             }
         }
-        internal void GetResult(Antigen testAg)
+
+        /// <summary>
+        /// Получение результата распознавания.
+        /// </summary>
+        /// <param name="testAg">Проверяемый антиген.</param>
+        public void GetResult(Antigen testAg)
         {
             int? res = 0;
+            double currentmaxAffinity = 0;
             foreach (MemoryCell memcell in memCells)
             {
-                double currentmaxAffinity = 0;
                 double aff = memcell.GetAffinnity(testAg);
                 if (aff > currentmaxAffinity)
                 {
@@ -139,42 +206,5 @@ namespace IVS_Lb_1
             Console.WriteLine("Result: " + res);
             Console.Read();
         }
-
-        // клонируем все антитела, имеющую аффинность выше средней, и с ними же сравниваем клонов - более успешные клоны заменят своего "оригинала".
-        //private void CloneMutateEdit(int probability, Antigen antigen)
-        //{
-        //    //List<Antibody> masClones = new List<Antibody>();
-        //    for (int i = 0; i < Population.Length; i++)
-        //    {
-        //        if (Population[i].Affinnity >= avgAff)
-        //        {
-        //            Antibody someClone = Population[i].Clone();
-        //            someClone.Mutate(probability);
-        //            someClone.SetAffinnity(antigen);
-        //            if (someClone.Affinnity > Population[i].Affinnity)
-        //                Population[i] = someClone;
-        //        }
-        //    }
-        //}
-
-        //double avgAff = 0;
-
-        // определяем аффинность всех антител одному антмигену, находим среднюю аффинность
-        //private void SetPopulationAffinity(Antigen antigen)
-        //{
-        //    double maxAffinnity = 0;
-        //    double minAffinnity = double.MaxValue;
-        //    for (int i = 0; i < Population.Length; i++)
-        //    {
-        //        Population[i].SetAffinnity(antigen);
-        //        if (maxAffinnity <= Population[i].Affinnity)
-        //            maxAffinnity = Population[i].Affinnity;
-        //        if (minAffinnity > Population[i].Affinnity)
-        //            minAffinnity = Population[i].Affinnity;
-        //    }
-        //    avgAff = (maxAffinnity + minAffinnity) / 2;
-        //}
-
-
     }
 }

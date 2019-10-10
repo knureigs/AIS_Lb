@@ -8,6 +8,16 @@ namespace IVS_Lb_1
 {
     class Program
     {
+        /// <summary>
+        /// Размер популяции антител (без учета клеток памяти).
+        /// </summary>
+        private const int PopulationAbSize = 600;// 6
+
+        /// <summary>
+        /// Размер популяции клеток памяти.
+        /// </summary>
+        private const int PopulationMCellSize = 3;
+
         static void Main(string[] args)
         {
             // описали антигены, составляющие обучающую выборку.
@@ -21,15 +31,17 @@ namespace IVS_Lb_1
             };
             foreach (Antigen ag in trainingSet)
             {
-                ShowAntigen(ag);
+                ag.ShowCell();
             }
 
-            AISRecognition ais = new AISRecognition(6, 3);
-            ais.Training(trainingSet, (Cell.PixelCount - 1) / Cell.PixelCount);
+            AISRecognition ais = new AISRecognition(PopulationAbSize, PopulationMCellSize);
+            ais.Training(trainingSet, (double)(Cell.PixelCount - 1) / Cell.PixelCount);
 
             Console.WriteLine();
+            Console.WriteLine("Test set:");
+            Console.WriteLine();
 
-            // тестовый антиген, потом вместо него будет функция для запроса от пользователя
+            // набор тестовых антигенов, потом вместо него будет функция для запроса ввода антигена от пользователя
             Antigen[] testAg = {
                 new Antigen(new bool[,] { { false, true, false }, { true, true, false }, { false, true, false }, { false, true, false } }, 1),
                 new Antigen(new bool[,] { { true, false, true }, { true, true, true }, { false, false, true }, { false, false, true }  }, 4),
@@ -39,26 +51,11 @@ namespace IVS_Lb_1
             };
             foreach (Antigen ag in testAg)
             {
-                ShowAntigen(ag);
+                ag.ShowCell();
                 ais.GetResult(ag);
                 Console.WriteLine();
                 Console.WriteLine();
             }
-        }
-
-        private static void ShowAntigen(Antigen antigen)
-        {
-            Console.WriteLine("Antigen " + antigen.RecognizedNumber + ":");
-
-            int xDemension = antigen.Pixels.GetLength(0);
-            int yDemension = antigen.Pixels.GetLength(1);
-            for (int i = 0; i < xDemension; i++)
-            {
-                for (int j = 0; j < yDemension; j++)
-                    Console.Write(Convert.ToInt32(antigen.Pixels[i, j]));
-                Console.WriteLine();
-            }
-            Console.WriteLine();
         }
     }    
 }
