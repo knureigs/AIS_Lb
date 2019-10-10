@@ -1,92 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace AIS
 {
-    /// <summary>
-    /// Абстрактный класс для всех клеток - антигенов и антител, описываемых двумерным двоичным массивом.
-    /// </summary>
-    public abstract class Cell
-    {
-        /// <summary>
-        /// Двумерный массив, описывающий антитело или антиген. По сути - этакий "генотип".
-        /// </summary>
-        public bool[,] Pixels;
-
-        /// <summary>
-        /// Размерность по горизонтали массива, описывающего антитело или антиген.
-        /// </summary>
-        public const int DemensionX = 4;
-
-        /// <summary>
-        /// Размерность по вертикали массива, описывающего антитело или антиген.
-        /// </summary>
-        public const int DemensionY = 3;
-
-        /// <summary>
-        /// Число пикселей изображения, описываемого клеткой.
-        /// </summary>
-        public const int PixelCount = 12;
-
-        public virtual void ShowCell()
-        {
-            int xDemension = this.Pixels.GetLength(0);
-            int yDemension = this.Pixels.GetLength(1);
-            for (int i = 0; i < xDemension; i++)
-            {
-                for (int j = 0; j < yDemension; j++)
-                    Console.Write(Convert.ToInt32(this.Pixels[i, j]));
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-        }
-    }
-
-    public class MemoryCell : Antibody
-    {
-        /// <summary>
-        /// Значение аффинности антитела антигену. Изначально 0, поскольку неизвестно.
-        /// </summary>
-        public int? RecognizedNumber
-        {
-            get;
-            private set;
-        }
-
-        public MemoryCell(Antibody ab, int? RecognizedNumber)
-        {
-            this.RecognizedNumber = RecognizedNumber;
-            this.Ag = ab.Ag;
-            this.Affinnity = ab.Affinnity;
-            this.Pixels = new bool[DemensionX, DemensionY];
-            for (int i = 0; i < DemensionX; i++)
-            {
-                for (int j = 0; j < DemensionY; j++)
-                {
-                    Pixels[i, j] = ab.Pixels[i, j];
-                }
-            }
-        }
-
-        public double GetAffinnity(Antigen ag)
-        {
-            double aff = 0;
-            int h = HemMeasure(ag);
-
-            // определение аффинности.
-            aff = (double)(PixelCount - h) / PixelCount; // получили значение аффинности от 0 (если совпало ноль позиций) до 1 (если совпали все позиции)
-            return aff;
-        }
-
-        public override void ShowCell()
-        {
-            Console.WriteLine("MemoryCell " + this.RecognizedNumber + ":");
-            base.ShowCell();
-        }
-    }
-
     /// <summary>
     /// Класс, описывающий антитело.
     /// </summary>
@@ -217,36 +132,6 @@ namespace AIS
                         this.Pixels[i, j] = (this.Pixels[i, j] == false) ? true : false;
                 }
             }
-        }
-    }
-
-    /// <summary>
-    /// Класс, описывающий антиген.
-    /// </summary>
-    public class Antigen : Cell
-    {
-        /// <summary>
-        /// Истинное значение распознаваемого символа. В рабочей ситуации не определено.
-        /// </summary>
-        public int? RecognizedNumber = null;
-
-        public Antigen(bool[,] array, int number)
-        {
-            this.Pixels = (bool[,])array.Clone();
-            this.RecognizedNumber = number;
-        }
-
-        public Antigen(int[,] array)
-        {
-            this.Pixels = (bool[,])array.Clone();
-            //this.DemensionX = mas.GetLength(0);
-            //this.DemensionY = mas.GetLength(1);
-        }
-
-        public override void ShowCell()
-        {
-            Console.WriteLine("Antigen " + this.RecognizedNumber + ":");
-            base.ShowCell();
         }
     }
 }

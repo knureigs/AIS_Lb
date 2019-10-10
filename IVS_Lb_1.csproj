@@ -43,8 +43,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AISRecognition.cs" />
-    <Compile Include="Cells.cs" />
+    <Compile Include="AIS\AISRecognition.cs" />
+    <Compile Include="AIS\Antibody.cs" />
+    <Compile Include="AIS\Antigen.cs" />
+    <Compile Include="AIS\Cell.cs" />
+    <Compile Include="AIS\MemoryCell.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

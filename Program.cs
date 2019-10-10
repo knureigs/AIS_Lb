@@ -12,12 +12,22 @@ namespace IVS_Lb_1
         /// <summary>
         /// Размер популяции антител (без учета клеток памяти).
         /// </summary>
-        private const int PopulationAbSize = 600;// 6
+        private const int PopulationAbSize = 6;// 600
 
         /// <summary>
         /// Размер популяции клеток памяти.
         /// </summary>
         private const int PopulationMCellSize = 3;
+
+        /// <summary>
+        /// Число лучших антител, отбираемых для клонирования.
+        /// </summary>
+        private const int SelectionForCloningAmount = 4;
+
+        /// <summary>
+        /// Максимальная вероятность мутации.
+        /// </summary>
+        private const int MutationProbability = 30;
 
         static void Main(string[] args)
         {
@@ -36,7 +46,7 @@ namespace IVS_Lb_1
             }
 
             AISRecognition ais = new AISRecognition(PopulationAbSize, PopulationMCellSize);
-            ais.Training(trainingSet, (double)(Cell.PixelCount - 1) / Cell.PixelCount);
+            ais.Training(trainingSet, (double)(Cell.PixelCount - 1) / Cell.PixelCount, SelectionForCloningAmount, MutationProbability);
 
             Console.WriteLine();
             Console.WriteLine("Test set:");
